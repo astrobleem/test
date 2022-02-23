@@ -1,7 +1,11 @@
+from asyncio.windows_events import NULL
 import csv
+from hashlib import new
+from multiprocessing.connection import wait
 import pygame
 import sys
 import random
+from pyparsing import null_debug_action
 import requests
 import json
 from  random import randint
@@ -253,17 +257,25 @@ players.append(tempplayer)
 def printQuote(s, firstnames):
     #now that it's finished, print it
     print( "hello I am " + str(firstnames.name) + " " + s['insult'])
+
 def HeroprintQuote(s, firstnames):
 	print(s['insult'])
 
-def requestQuote(monster, callback):
+def hi(one,two):
+	pass
+
+def requestQuote(monster):
     #get some random quote
-    url = 'https://evilinsult.com/generate_insult.php?lang=en&type=json'
-    req = requests.get(url)
-    fnames = req.text
-    insult = json.loads(fnames)
+	url = 'https://evilinsult.com/generate_insult.php?lang=en&type=json'
+	req = requests.get(url)
+	fnames = req.text
+	insult = json.loads(fnames)
     #now call the function using the insult.
-    callback(insult, monster)
+	
+	fnames = NULL
+	return insult['insult']
+
+
 
 if __name__ == '__main__':
 
@@ -293,9 +305,9 @@ if __name__ == '__main__':
 		#main inner loop
 		lo = False
 		idle = True
-		
+		sal = "0"
 		while idle:
-			pq = input("Do you wish to go to the potion shop[1] or Fight monsters [2] or Quit [3]")
+			pq = input("Do you wish to go to the potion shop[1] or Fight monsters [2], or Saloon [3], or Quit [4]")
 			if pq == '1':
 				shop(players)
 			if pq == '2':
@@ -309,12 +321,20 @@ if __name__ == '__main__':
 				fnames = req.text
 				firstnames = json.loads(fnames)
 
-				requestQuote(monsters[0], printQuote)
+				
+				oldinsult = requestQuote(monsters[0])
+				print(oldinsult)
+
+
 				if players[0].baits > 0:
 					print("you unpack all " + str(players[0].baits) + " of your baits and a few enemies appear!") 
-					for x in range(0, players[0].baits):
-						
-						
+					qwlo = True
+
+					newinsult = "0"
+					#oldinsult = "0"
+					atemmpts = 0
+					atemmptsfail = False
+					for x in range(0, players[0].baits):					
 						ghp = random.randrange(80,120)
 						gpot = random.randrange(1,3)
 						gstr = random.randrange(8,10)
@@ -322,14 +342,42 @@ if __name__ == '__main__':
 						gnatdef = 1
 						ggold = random.randrange(10,50)
 						tempmonster = Fightman(firstnames[x], ghp, gpot, gstr, gexp, gnatdef, ggold)
+						newinsult = requestQuote(tempmonster)
 						monsters.append(tempmonster)
-						requestQuote(tempmonster, printQuote)
+						time.sleep(4)
+						if newinsult == oldinsult:
+							while qwlo:
+								newinsult = requestQuote(tempmonster)
+								atemmpts = atemmpts + 1
+								if not newinsult == oldinsult:
+									qwlo = False
+									atemmpts = 0
+								if atemmpts > 4:
+									qwlo = False
+									atemmpts = 0
+									atemmptsfail = True
+								time.sleep(4)
+								print("Generating insult.....")
+						if atemmptsfail == False:
+							print(newinsult)
+						else: 
+							print("fuck you.")
+							atemmptsfail = False				
+						oldinsult = newinsult
+						
 					
 
 				players[0].baits = 0
 				#print(players[0].baits)
 				bgft(players, monsters)
 			if pq == '3':
+				print("Welcome to Saloon. Whatcha getin?")
+				sallop = True
+				while sallop:
+					sal = input("Pals[1], Drink[2], or Leave[3]")
+					if sal == '3':
+						sallop = False
+			if pq == '4':
 				idle = False
 				lop = False
 
